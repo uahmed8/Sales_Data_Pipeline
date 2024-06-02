@@ -26,7 +26,7 @@ You should have all files inside this folder, here is description about each fil
 command to run the whole project and have the data inserted in database in the end of code execution:
 
 ```
-docker-compose up --build
+docker-compose up
 ```
 
 This command will build the image having the dependencies based prepared environment.
