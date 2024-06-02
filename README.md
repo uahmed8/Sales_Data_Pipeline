@@ -9,7 +9,7 @@ cd Sales_Data_Pipeline
 
 clone the project in this folder
 ```
-git clone git@github.com:](https://github.com/uahmed8/Sales_Data_Pipeline.git
+git clone https://github.com/uahmed8/Sales_Data_Pipeline.git
 cd Sales_Data_Pipeline
 ```
 
