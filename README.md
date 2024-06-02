@@ -19,8 +19,8 @@ You should have all files inside this folder, here is description about each fil
 * 2- code_python.py: It has all the code which is consist of multiple functions for transformation, aggregations and loading transformed/aggregaed data to database
 * 3- docker-compose.yaml: This file I am using to pull and run the images
 * 4- sales_data.csv: sales data using as source file
-* 5-schemasql.sql: having all the requried transformed and aggregated create tables and create schema queries that will be executed the container for postgresql gets up
-* DB_Diagram: This is Diagram of database schema, used to store the transformed and aggregated data.
+* 5- schemasql.sql: having all the requried transformed and aggregated create tables and create schema queries that will be executed the container for postgresql gets up
+* 6- DB_Diagram: This is Diagram of database schema, used to store the transformed and aggregated data.
 
 ### python code description has been made inside code_python.py file in comments.
 
