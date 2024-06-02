@@ -29,7 +29,7 @@ services:
       - dem
 
   app:
-    restart: unless-stopped
+    restart: 'no'
     build:
       context: .
       dockerfile: Dockerfile
