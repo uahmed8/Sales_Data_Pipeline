@@ -20,6 +20,7 @@ You should have all files inside this folder, here is description about each fil
 * 3- docker-compose.yaml: This file I am using to pull and run the images
 * 4- sales_data.csv: sales data using as source file
 * 5-schemasql.sql: having all the requried transformed and aggregated create tables and create schema queries that will be executed the container for postgresql gets up
+* DB_Diagram: This is Diagram of database schema, used to store the transformed and aggregated data.
 
 ### python code description has been made inside code_python.py file in comments.
 
@@ -60,9 +61,11 @@ as per seen in pictures there will be schema as given `retail_info` with transfo
 ![schema_tables](https://github.com/uahmed8/Sales_Data_Pipeline/assets/34869772/b989fd79-cfbf-4db1-822a-08dca798ec8f)
 
 
-Here is view of diagram of the database schema used to store the transformed and aggregated data.
-![DB_Diagram](https://github.com/uahmed8/Sales_Data_Pipeline/assets/34869772/698f90cd-4acd-4569-a871-00e2fc525cb3)
+# last step to close the docker services after full review
 
+```
+docker-compose down
+```
 
 
 
