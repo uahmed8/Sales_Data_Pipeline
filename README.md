@@ -7,7 +7,7 @@ Create a folder:
 `cd Sales_Data_Pipeline`
 
 clone the project in this folder
-`git clone git@github.com:`
+`git clone git@github.com:](https://github.com/uahmed8/Sales_Data_Pipeline.git`
 `cd Sales_Data_Pipeline`
 
 You should have all files inside this folder including docker-compose.yaml file
