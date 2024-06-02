@@ -4,39 +4,51 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
-#import psycopg2
-#import psycopg2.extras as extras 
+import psycopg2
+import psycopg2.extras as extras 
 
+#function for extracting data from sales_data.csv
 def sales_extraction_transformation():
     sales_data = pd.read_csv('sales_data.csv')
     return sales_data
-    
+
+#function for extracting data from user API
 def user_extractions_transformations():
     response1 = requests.get('https://jsonplaceholder.typicode.com/users')
     #Extract relevant fields such as id, name, username, email, lat and lng from the API response.
     users_data = response1.json()
+    #changing json to panda datframe format
     user_df = pd.json_normalize(users_data)
     
     return user_df
-
+#function for extracting data from weather API
 def weather_extractions_transformations():
+    # extracing users/customers information for getting geo lat and lng coords info
     user_df = user_extractions_transformations()
+    #base url that will be same till this part
     base_url = 'https://api.openweathermap.org/data/2.5/weather?lat='
+    #this default API I created from weather web and placed here
     api_key = '99911eb7701246efcde442b4c660763f'
+    # this empty list is being created for having all pulled weather information in dictionary format for each customer
     row_list = []
+    # some necessary columns name creation
     weather_columns = ['customer_id','weather_condition', 'weather_description','temperature','min_temperature','max_temperature','pressure','humidity','wind_speed']
+    # creating empty dataframe with just names
     weather_df = pd.DataFrame(columns=weather_columns)
     for index, row in user_df.iterrows():
+        #calling over all users for their geolocation coords to be used with weathermap base url
         url = base_url + row['address.geo.lat']+'&lon='+row['address.geo.lng'] +'&appid='+ api_key
         response2 = requests.get(url)
         response2_json = response2.json()
+        # in response getting json format data and from json fetching each information value to be used in dictionary format with column name as key
         dict1 = {'customer_id': row['id'], 'weather_condition': response2_json["weather"][0]["main"],
                 'weather_description':response2_json["weather"][0]["description"],'temperature':response2_json["main"]["temp"],
                  'min_temperature':response2_json["main"]["temp_min"],'max_temperature':response2_json["main"]["temp_max"],
                  'pressure':response2_json["main"]["pressure"],'humidity':response2_json["main"]["humidity"],
                 'wind_speed':response2_json["wind"]["speed"]} 
+        # having list of dictionary (weather columns with values pulled from weather web)
         row_list.append(dict1)
-
+    # changing to dataframe for better tranformation and anaylsis run
     user_weather_df= pd.DataFrame(row_list)
     
     return user_weather_df
@@ -44,10 +56,14 @@ def weather_extractions_transformations():
 
 
 def final_dataset_transformation():
+    # returngin all informations as dataframes and then merging them with eachother to have a final_dataset and to use that dataset dataframe aggregation
+    # it is not necessary to have a final_Dataset on top of these three dataframe, it depends upon requirement if needed information can be done with either of these
+    # dataframes seperately then that seems more reasonable approach
     sales_data = sales_extraction_transformation()
     user_df = user_extractions_transformations()
     user_weather_df = weather_extractions_transformations()
     sales_users_df = pd.merge(sales_data, user_df, how="inner", left_on=['customer_id'], right_on=['id'])
+    # dropping one columns id as we already have same information column with name customer_id
     sales_users_df = sales_users_df.drop(columns=['id'])    
     final_dataset = pd.merge(sales_users_df, user_weather_df, how="left", on=['customer_id'])
     return final_dataset,user_df,sales_data,user_weather_df
@@ -56,8 +72,8 @@ def manip_aggreg():
     final_dataset,user_df,sales_data,user_weather_df = final_dataset_transformation()
     final_dataset.head()
     #1-Calculate total sales amount per customer.
-    final_dataset['total_sales'] = final_dataset['quantity'] * final_dataset['price']
-    total_sales_per_customer = final_dataset.groupby('customer_id')['total_sales'].sum().reset_index()
+    sales_data['total_sales'] = sales_data['quantity'] * sales_data['price']
+    total_sales_per_customer = sales_data.groupby('customer_id')['total_sales'].sum().reset_index()
     plt.figure(figsize=(10, 6))
     plt.plot(total_sales_per_customer['customer_id'].astype(str), total_sales_per_customer['total_sales'], marker='*')
     plt.xlabel('customer_id')
@@ -190,11 +206,12 @@ def manip_aggreg():
     return user_df,sales_data,user_weather_df,total_sales_per_customer ,average_order_quantity_per_product,top_selling_customers,top_selling_products,monthly_sales,quarterly_sales,total_orders_per_website,aov_per_city,average_sales_per_weather
     
 def insert_data(conn, df, table): 
-  
+    # tranforming columns value in tuples format inside a list to transfer the prepared whole rows into table
     tuples = [tuple(x) for x in df.to_numpy()] 
     cols = ','.join(list(df.columns)) 
     # SQL query to execute 
     query = "INSERT INTO %s(%s) VALUES %%s" % (table, cols)
+    # using truncate query to have the table empty before inserting any new data as there are keys made on tables
     truncate_query = "TRUNCATE %s" % (table) 
     cursor = conn.cursor()  
     try:
@@ -212,9 +229,11 @@ def insert_data(conn, df, table):
     cursor.close()
     
 def loading(user_df,sales_data,user_weather_df,total_sales_per_customer ,average_order_quantity_per_product,top_selling_customers,top_selling_products,monthly_sales,quarterly_sales,total_orders_per_website,aov_per_city,average_sales_per_weather):
+    #making db connection
     conn = psycopg2.connect( 
     database="retail_info", user='postgres', password='postgres', host='postgres', port='5432'
     )
+    #calling insertion function with having connection as argument and dataframes and the actual name of tables that are created in DB
     insert_data(conn, sales_data, 'retail_info.sales_data')
     insert_data(conn, user_df, 'retail_info.user_data')
     insert_data(conn, user_weather_df, 'retail_info.weather_data')
@@ -232,4 +251,9 @@ if __name__ == "__main__":
     #aligning dataframe column names as table columns - to get rid of column not found errors:
     user_df.rename(columns = {'address.street':'street_address','address.suite':'suite_address','address.city':'city_address','address.zipcode':'zipcode_address','address.geo.lat':'geo_lat_address','address.geo.lng':'geo_lng_address','company.name':'company_name','company.catchPhrase':'company_catchPhrase','company.bs':'company_bs'}, inplace = True)
     average_order_quantity_per_product.rename(columns = {'quantity':'avg_sales_quantity'}, inplace = True)
+    aov_per_city.rename(columns = {'average_order_value':'avg_sales_value'}, inplace = True)
+    total_orders_per_website.rename(columns = {'total_orders':'total_sales'}, inplace = True)
+    #changing datatypes of needed to align it with DB tables column datatype
+    monthly_sales['year_month'] = monthly_sales['year_month'].astype(str)
+    quarterly_sales['year_quarter'] = quarterly_sales['year_quarter'].astype(str)
     loading(user_df,sales_data,user_weather_df,total_sales_per_customer ,average_order_quantity_per_product,top_selling_customers,top_selling_products,monthly_sales,quarterly_sales,total_orders_per_website,aov_per_city,average_sales_per_weather)
